@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Firebear GAE Demo</title>
+
+    <script src="https://www.gstatic.com/firebasejs/ui/live/1.0/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/live/1.0/firebase-ui-auth.css" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+  </head>
+  <body>
+    <div id="container">
+      <h3>Firebear GAE Demo</h3>
+      <div id="loaded">
+        <div id="main">
+          <div id="user-signed-in" class="hidden">
+            <div id="user-info">
+              <div id="photo-container">
+                <img id="photo"></img>
+              </div>
+              <div id="name"></div>
+              <div id="email"></div>
+              <div class="clearfix"></div>
+            </div>
+            <p>
+              <button id="sign-out">Sign Out</button>
+            </p>
+          </div>
+          <div id="user-signed-out" class="hidden">
+            <h4>You are signed out.</h4>
+            <div id="firebaseui-spa">
+              <div id="firebaseui-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/3.6.1/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+	apiKey: "AIzaSyBdrKkDIM_VRYR3dPR4h9mgPawkUBIhWfU",
+	authDomain: "firebeargaeflex.firebaseapp.com",
+	databaseURL: "https://firebeargaeflex.firebaseio.com",
+	storageBucket: "firebeargaeflex.appspot.com",
+	messagingSenderId: "239867837298"
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script>
+      // FirebaseUI config.
+      var uiConfig = {
+        'signInSuccessUrl': '/',
+        'signInOptions': [
+          // TODO(developer): Remove the providers you don't need for your app.
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+          firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+          firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+          firebase.auth.GithubAuthProvider.PROVIDER_ID,
+          firebase.auth.EmailAuthProvider.PROVIDER_ID
+        ],
+        // Terms of service url.
+        'tosUrl': 'https://www.google.com'
+      };
+
+      // Initialize the FirebaseUI Widget using Firebase.
+      var ui = new firebaseui.auth.AuthUI(firebase.auth());
+      // The start method will wait until the DOM is loaded to include the FirebaseUI sign-in widget
+      // within the element corresponding to the selector specified.
+      ui.start('#firebaseui-container', uiConfig);
+
+      // Listen to change in auth state so it displays the correct UI for when
+      // the user is signed in or not.
+      firebase.auth().onAuthStateChanged(function(user) {
+	user ? handleSignedInUser(user) : handleSignedOutUser();
+      });
+      /**
+       * Displays the UI for a signed in user.
+       * @param {!firebase.User} user
+       */
+      var handleSignedInUser = function(user) {
+	document.getElementById('user-signed-in').style.display = 'block';
+	document.getElementById('user-signed-out').style.display = 'none';
+      document.getElementById('firebaseui-spa').style.display = 'none';
+      document.getElementById('name').textContent = user.displayName;
+	document.getElementById('email').textContent = user.email;
+	if (user.photoURL){
+	  document.getElementById('photo').src = user.photoURL;
+	  document.getElementById('photo').style.display = 'block';
+	} else {
+	  document.getElementById('photo').style.display = 'none';
+      }
+      fetchServerAuthenticationResponse(user);
+      };
+
+      var fetchServerAuthenticationResponse = function(user) {
+	user.getToken().then(function(idToken) {
+
+	$.ajax('/verify', {
+	  /* Set header for the XMLHttpRequest to get data from the web server
+	  associated with userIdToken */
+	  headers: {
+	    'Authorization': 'Bearer ' + idToken
+	  }
+        });
+        });
+
+      };
+
+      /**
+       * Displays the UI for a signed out user.
+       */
+      var handleSignedOutUser = function() {
+      document.getElementById('user-signed-in').style.display = 'none';
+      document.getElementById('firebaseui-spa').style.display = 'block';
+	document.getElementById('user-signed-out').style.display = 'block';
+      };
+
+      /**
+       * Initializes the app.
+       */
+      var initApp = function() {
+	document.getElementById('sign-out').addEventListener('click', function() {
+	  firebase.auth().signOut();
+	});
+      };
+
+      window.addEventListener('load', initApp);
+    </script>
+  </body>
+</html>
